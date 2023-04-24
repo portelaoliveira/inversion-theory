@@ -12,42 +12,43 @@ clc;
 
 dados = importdata('RefracaoV1V2.txt','\t');
 
-dist = dados.data(:,1); % Distância dos Geofones
-td = dados.data(:,2)./1000; % Convertendo de ms para s
-tr = dados.data(:,3)./1000; % Convertendo de ms para s
+dist = dados.data(:,1); % Distância dos Geofones (Vetor dos valores observados)
+td = dados.data(:,2)./1000; % Tempo da onda direta convertido de ms para s
+tr = dados.data(:,3)./1000; % Tempo da onda refratada convertido de ms para s
 
 % Velocidade do meio 1
+% td = a+(1/V1)*dist; 1/V1=S1
 
-t1 = td; % Tempo da onda refratada
-
-G = dist; % Matriz dos coeficientes
-
-W = eye(length(dist)); % Peso 
-
-M = 1; % Número de parâmetros
-
-N = length(dist(:,1)); % Número de equações
-
-m = (G'*W*G)^-1*(G'*W*t1); % Vetor dos parâmetros
-
-v1 = 1/m; % Velocidade do meio 1
-
-disp(v1)
+N = length(td(:,1)); % Número de dados observados
+M = 2; % Número de parâmetros
+G1 = ones(N,1); % Vetor do número de dados observados
+G2 = dist - dist(1,1); % MVetor dos valores observados
+d = td; % Tempo da onda direta
+G = [G1 G2]; % Matriz dos coeficientes
+W = eye(N,N); % Matriz dos pesos (Matriz identidade)
+m = (G'*W*G)^-1*(G'*W*d); % Vetor dos parâmetros
+v1 = 1/m(2); % Velocidade do meio 1
 
 % Velocidade do meio 2
+% tr = a+(1/V2)*x; 1/V2=S2
 
-t2 = tr; % Tempo da onda refratada
+M = 2; % Número de parâmetros
+G1 = ones(N,1); % Vetor dados observados
+G2 = dist - dist(1,1); % Vetor dos valores observados
+d = tr; % Tempo da onda refratada
+G = [G1 G2]; % Matriz dos coeficientes
+W = eye(N,N); % Matriz dos pesos (Matriz identidade)
+m = (G'*W*G)^-1*(G'*W*d); % Vetor dos parâmetros
+v2 = 1/m(2); % Velocidade do meio 2
 
-G = dist; % Matriz dos coeficientes
+% Cálculo da espessura
+% h1 = ti*V1*V2/(2*sqrt(V2^2-V1^2))
 
-W = eye(length(dist)); % Peso 
+c = v1*v2/(2*sqrt(v2^2-v1^2));
+h = tr(1,1)*c;
 
-M = 1; % Número de parâmetros
+% Exibindo os resultados
 
-N = length(dist(:,1)); % Número de equações
-
-m = (G'*W*G)^-1*(G'*W*t2); % Vetor dos parâmetros
-
-v2 = 1/m; % Velocidade do meio 1
-
-disp(v2)
+printf("Velocidade da onda P no meio 1: %d m/s\n", round(v1))
+printf("Velocidade da onda P no meio 2: %d m/s\n", round(v2))
+printf("Espessura da camada: %d m\n", round(h))
